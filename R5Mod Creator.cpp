@@ -1,10 +1,12 @@
 #include "spdlog/spdlog.h"
 #include "spdlog/stopwatch.h"
 #include "color.hpp"
+#include "json.hpp"
 #include "cryptopp/sha.h"
 #include "cryptopp/zdeflate.h"
 #include "cryptopp/zinflate.h"
 #include "cryptopp/hex.h"
+#include <vector>
 #include <iostream>
 #include <fstream>
 #include <regex>
@@ -94,6 +96,19 @@ void buildMod(string disName, string intName, string fileName, string desc, stri
 	int fileCount = 0;
 	int bytesRemaining = 0;
 
+	nlohmann::json scripts;
+	bool scriptsB = false;
+	
+	if (filesystem::exists(folder + "/scripts.json")) {
+		spdlog::info("Found scripts.json, reading...");
+		ifstream scriptsFile(folder + "/scripts.json");
+		scriptsFile >> scripts;
+		scriptsFile.close();
+		scriptsB = true;
+	}
+	else
+		delete& scripts;
+
 	// For each file in the folder, check if it's a directory/empty, if it's not, then right the mod
 	for (auto& e : filesystem::recursive_directory_iterator(folder)) {
 		if (e.is_directory()) continue;
@@ -111,6 +126,35 @@ void buildMod(string disName, string intName, string fileName, string desc, stri
 		int compressedSizePos = file.tellp();
 		// Write 4 bytes of 0s for the compressed size
 		file.write(reinterpret_cast<const char*>("0000"), 4);
+		
+		if (scriptsB) {
+			for (auto& s : scripts) {
+				// If filename is same as the entry, spdlog it
+				if (s.contains("file")) {
+					if (e.path().filename() == s["file"].get<string>()) {
+						spdlog::info("Object found containg file");
+						if (s["type"].get<string>() == "server")
+							file.write(reinterpret_cast<const char*>("3"), 1);
+						else if (s["type"].get<string>() == "client")
+							file.write(reinterpret_cast<const char*>("2"), 1);
+						else if (s["type"].get<string>() == "ui")
+							file.write(reinterpret_cast<const char*>("1"), 1);
+						else
+							file.write(reinterpret_cast<const char*>("3"), 1);
+						break;
+					}
+				}
+				else if (e.path().filename() == s.get<string>()) {
+					spdlog::info("Custom script found");
+					file.write(reinterpret_cast<const char*>("3"), 1);
+					break;
+				}
+				else
+					file.write(reinterpret_cast<const char*>("0"), 1);
+			}
+		}
+		else
+			file.write(reinterpret_cast<const char*>("0"), 1);
 		
 		// Open the file and write it to a buffer
 		char* data = new char[uncompressedSize];
@@ -135,7 +179,7 @@ void buildMod(string disName, string intName, string fileName, string desc, stri
 
 		file.write(compressedData.c_str(), compressedSize);
 
-		bytesRemaining += e.path().string().length() + 10 + compressedSize;
+		bytesRemaining += e.path().string().length() + 11 + compressedSize;
 		fileCount++;
 	}
 
@@ -251,6 +295,8 @@ fileName:
 		<< "Description: " << dye::green(description) << endl
 		<< "Version: " << dye::green(version) << endl
 		<< "Folder: " << dye::green(folder) << endl;
+	if (filesystem::exists(folder + "/scripts.json"))
+		cout << dye::yellow("Scripts.json found in folder. This will be used for custom scripts..") << endl;
 	if (fileName != internalName)
 		cout << "File Name: " << dye::green(fileName + ".r5mod") << endl;
 
@@ -349,6 +395,11 @@ void deconstructMod(string file, bool manifestOnly = false) {
 			char* cFileSize = new char[4];
 			modFile.read(cFileSize, 4);
 			unsigned int cFileSizeInt = *reinterpret_cast<unsigned int*>(cFileSize);
+			// Get custom script state
+			char* customScript = new char[1];
+			modFile.read(customScript, 1);
+			uint8_t customScriptInt = *reinterpret_cast<uint8_t*>(customScript);
+
 			// Get the file data
 			char* fileData = new char[cFileSizeInt];
 			modFile.read(fileData, cFileSizeInt);
