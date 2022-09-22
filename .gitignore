@@ -3,6 +3,11 @@
 ##
 ## Get latest from https://github.com/github/gitignore/blob/master/VisualStudio.gitignore
 
+output
+flowstate
+libs
+*.r5mod
+
 # User-specific files
 *.rsuser
 *.suo
