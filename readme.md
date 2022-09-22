@@ -13,7 +13,7 @@ You will then be prompted to fill in the following details (`*` is required):
 - SDK Version`*`
 - Version
 - Author
-- The folder to use`*` - Use `\` if you'd like to convert the current directory into a mod(will ignore executable), or specify a folder relative to the executable to make into a mod.
+- The folder to use`*` - Use `./` if you'd like to convert the current directory into a mod(will ignore executable), or specify a folder relative to the executable to make into a mod.
 - File name of mod - Leave blank 
 > You'll be prompted to continue, type `y` to build the mod, or `n` to return to the main screen.
 
