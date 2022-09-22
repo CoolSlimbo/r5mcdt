@@ -7,7 +7,7 @@ This is a different to use mods for R5Reloaded Mod Manager.
 ### Mod Creation
 To create a mod, select 1.
 You will then be prompted to fill in the following details (`*` is required):
-- Display Name*`
+- Display Name`*`
 - Internal Name`*`
 - Description
 - SDK Version`*`
