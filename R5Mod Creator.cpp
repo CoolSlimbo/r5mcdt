@@ -97,6 +97,7 @@ void buildMod(string disName, string intName, string fileName, string desc, stri
 	// For each file in the folder, check if it's a directory/empty, if it's not, then right the mod
 	for (auto& e : filesystem::recursive_directory_iterator(folder)) {
 		if (e.is_directory()) continue;
+		if (e.path().extension() == "exe" || e.path().extension() == "r5mod") continue;
 
 		// The file structure consists of a string with the location of the file, the uncompressed size as a 32-bit unsigned int, the compressed size as a 32-bit unsigned int, and the compressed file data.
 
@@ -473,7 +474,7 @@ void editMod(string file) {
 	modFile.read(bytesRemaining, 4);
 	unsigned int bytesRemainingInt = *reinterpret_cast<unsigned int*>(bytesRemaining);
 
-	spdlog::info(dye::purple("Purple") + " represents the codename to use to edit.");
+	spdlog::info("Purple represents the codename to use to edit.");
 	// Log out the information for the user to view
 	cout << "Display Name(" << dye::purple("dn") << "): " << dye::green(string(displayName)) << endl
 		<< "Internal Name(" << dye::purple("in") << ")" << dye::green(string(intName)) << endl
